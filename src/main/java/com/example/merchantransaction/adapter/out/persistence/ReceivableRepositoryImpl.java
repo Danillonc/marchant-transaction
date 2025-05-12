@@ -4,7 +4,9 @@ import com.example.merchantransaction.application.port.out.ReceivableRepository;
 import com.example.merchantransaction.domain.model.Receivable;
 import com.example.merchantransaction.domain.model.Transaction;
 import com.example.merchantransaction.infrastructure.config.AppConfig;
+import com.example.merchantransaction.infrastructure.util.LocalDateFormat;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cglib.core.Local;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -12,16 +14,14 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.retry.support.RetryTemplate;
 import org.springframework.stereotype.Repository;
 import org.springframework.web.client.RestTemplate;
-import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Repository
@@ -89,14 +89,20 @@ public class ReceivableRepositoryImpl implements ReceivableRepository {
             String url = UriComponentsBuilder
                     .fromUriString(baseUrl)
                     .path("/receivables")
-                    .queryParam("create_date_gte", start)
-                    .queryParam("create_date_lte", end)
                     .build()
                     .toUriString();
 
             ResponseEntity<Receivable[]> response = restTemplate.getForEntity(url, Receivable[].class);
-            Receivable[] array = response.getBody();
-            return array != null ? Arrays.asList(array) : Collections.emptyList();
+            Receivable[] responseBody = response.getBody();
+
+            LocalDate startDate = LocalDateFormat.convertStringToLocalDate(start);
+            LocalDate endDate = LocalDateFormat.convertStringToLocalDate(end);
+
+            return Arrays.stream(responseBody)
+                    .filter(receivable -> {
+                        LocalDate dbDate = LocalDateFormat.convertStringToLocalDate(receivable.getCreateDate());
+                        return !dbDate.isBefore(startDate) && !dbDate.isAfter(endDate);
+                    }).collect(Collectors.toList());
         });
     }
 }
