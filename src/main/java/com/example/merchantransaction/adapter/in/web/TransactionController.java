@@ -2,6 +2,7 @@ package com.example.merchantransaction.adapter.in.web;
 
 import com.example.merchantransaction.adapter.in.web.dto.TransactionRequestDTO;
 import com.example.merchantransaction.adapter.in.web.dto.TransactionResponseDTO;
+import com.example.merchantransaction.adapter.in.web.exception.TransactionException;
 import com.example.merchantransaction.application.port.in.TransactionUseCase;
 import com.example.merchantransaction.infrastructure.util.TransactionConverter;
 import io.swagger.v3.oas.annotations.Operation;
@@ -24,7 +25,7 @@ public class TransactionController {
 
     private final TransactionUseCase transactionUseCase;
 
-    @Operation(summary = "Start a transaction", description = "Start a transaction with request body parameters")
+    @Operation(summary = "Create a transaction", description = "Create a transaction with request body parameters")
     @ApiResponses(value = {
             @ApiResponse(
                     responseCode = "201", description = "Transactions created",
@@ -35,10 +36,14 @@ public class TransactionController {
             @ApiResponse(
                     responseCode = "500",
                     description = "Transaction not created"
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Transaction request not proccessable"
             )
     })
     @PostMapping("/transaction/create")
-    public ResponseEntity<Void> createTransaction(@Valid @RequestBody TransactionRequestDTO requestDTO) {
+    public ResponseEntity<Void> createTransaction(@Valid @RequestBody TransactionRequestDTO requestDTO) throws TransactionException {
         this.transactionUseCase.processPayment(TransactionConverter.convertToDomain(requestDTO));
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
@@ -58,7 +63,26 @@ public class TransactionController {
     })
     @GetMapping
     public ResponseEntity<List<TransactionResponseDTO>> getAllTransactions() {
-        List<TransactionResponseDTO> transactions = TransactionConverter.convertToDto(transactionUseCase.getAllTransactions());
+        List<TransactionResponseDTO> transactions = TransactionConverter.convertToDtoList(transactionUseCase.getAllTransactions());
         return ResponseEntity.ok(transactions);
     }
+
+    @Operation(summary = "Get the transaction by ID", description = "Recover the transaction by provided id.")
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200", description = "Transaction found",
+                    content = @Content(
+                            schema = @Schema(implementation = TransactionResponseDTO.class)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "Transaction not found"
+            )
+    })
+    @GetMapping("/transaction/{id}")
+    public ResponseEntity<TransactionResponseDTO> getTransaction(@PathVariable String id) {
+        return ResponseEntity.ok(TransactionConverter.convertToDto(transactionUseCase.findById(id)));
+    }
+
 }

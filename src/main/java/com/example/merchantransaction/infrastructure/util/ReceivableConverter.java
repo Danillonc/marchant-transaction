@@ -35,7 +35,7 @@ public class ReceivableConverter {
                 .map(tx -> new ReceivableResponseDTO(
                         tx.getId(),
                         tx.getStatus(),
-                        tx.getCreateDate().toString(),
+                        tx.getCreateDate(),
                         tx.getSubtotal().toString(),
                         tx.getDiscount().toString(),
                         tx.getTotal().toString()

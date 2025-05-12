@@ -6,8 +6,6 @@ import com.example.merchantransaction.domain.model.Receivable;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
