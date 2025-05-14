@@ -10,6 +10,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.retry.support.RetryTemplate;
 import org.springframework.stereotype.Repository;
+import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
@@ -84,5 +85,25 @@ public class TransactionRepositoryImpl implements TransactionRepository {
             Transaction[] body = response.getBody();
             return body != null ? Arrays.asList(body) : Collections.emptyList();
         });
+    }
+
+    @Override
+    public boolean delete(String transactionId) {
+        return retryTemplate.execute(context -> {
+            log.debug("Deleting transaction: {}", transactionId);
+            URI uri = UriComponentsBuilder.fromUriString(baseUrl)
+                    .path("/transactions/{id}")
+                    .buildAndExpand(transactionId)
+                    .toUri();
+
+            try {
+                restTemplate.delete(uri);
+                return true;
+            } catch (RestClientException e) {
+                log.debug("Failed to delete transaction: {}, error: {}", transactionId, e.getMessage());
+                return false;
+            }
+        });
+
     }
 }

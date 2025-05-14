@@ -2,12 +2,9 @@ package com.example.merchantransaction.application.service;
 
 import com.example.merchantransaction.adapter.in.web.exception.TransactionException;
 import com.example.merchantransaction.adapter.out.persistence.client.NumeratorClient;
+import com.example.merchantransaction.application.port.in.ReceivableUseCase;
 import com.example.merchantransaction.application.port.in.TransactionUseCase;
-import com.example.merchantransaction.application.port.out.ReceivableRepository;
 import com.example.merchantransaction.application.port.out.TransactionRepository;
-import com.example.merchantransaction.application.service.factory.PaymentStrategyFactory;
-import com.example.merchantransaction.domain.model.PaymentMethodStrategy;
-import com.example.merchantransaction.domain.model.Receivable;
 import com.example.merchantransaction.domain.model.Transaction;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -22,35 +19,33 @@ import java.util.Optional;
 public class TransactionServiceImpl implements TransactionUseCase {
 
     private final TransactionRepository transactionRepository;
-    private final ReceivableRepository receivableRepository;
     private final NumeratorClient numeratorClient;
-    private final PaymentStrategyFactory strategyFactory;
+    private final ReceivableUseCase receivableUseCase;
+
 
 
     @Override
-    public void processPayment(Transaction transaction) throws TransactionException {
+    public void createTransaction(Transaction transaction) throws TransactionException {
+        String transactionId = null;
+
         try {
-            String transactionId = String.valueOf(this.numeratorClient.generateUniqueId());
-            String receivableId = String.valueOf(this.numeratorClient.generateUniqueId());
+             transactionId = String.valueOf(this.numeratorClient.generateUniqueId());
 
             transaction.setId(transactionId);
             transaction.setCardNumber(transaction.getCardNumber().substring(12)); // Apenas últimos 4 dígitos
 
-            transactionRepository.save(transaction);
+            this.transactionRepository.save(transaction);
 
-            //recebiveis
-            PaymentMethodStrategy strategy = strategyFactory.getStrategy(transaction.getMethod());
-
-            Receivable receivable = strategy.process(transaction);
-            receivable.setId(receivableId);
-
-            receivableRepository.save(receivable);
+            //creating receivable for transaction
+            this.receivableUseCase.createReceivables(transaction);
 
         } catch (Exception e) {
             log.error("Transaction was not created");
-            throw new TransactionException(e.getMessage());
-        }
 
+            manualRollbackCompensation(transactionId);
+
+            throw new TransactionException("Failed to process payment: " + e.getMessage());
+        }
     }
 
     @Override
@@ -61,5 +56,18 @@ public class TransactionServiceImpl implements TransactionUseCase {
     @Override
     public Optional<Transaction> findById(String id) {
         return this.transactionRepository.findById(id);
+    }
+
+
+    private void manualRollbackCompensation(String transactionId) {
+        // Compensation: Delete transaction if receivable fails, doing manual rollback because the operation is not in a transaction database.
+        if (transactionId != null) {
+            try {
+                transactionRepository.delete(transactionId);
+                log.info("Rolled back transaction with ID: {}", transactionId);
+            } catch (Exception rollbackEx) {
+                log.error("Failed to rollback transaction with ID: {}", transactionId, rollbackEx);
+            }
+        }
     }
 }

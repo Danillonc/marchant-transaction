@@ -44,7 +44,7 @@ public class TransactionController {
     })
     @PostMapping("/transaction/create")
     public ResponseEntity<Void> createTransaction(@Valid @RequestBody TransactionRequestDTO requestDTO) throws TransactionException {
-        this.transactionUseCase.processPayment(TransactionConverter.convertToDomain(requestDTO));
+        this.transactionUseCase.createTransaction(TransactionConverter.convertToDomain(requestDTO));
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 

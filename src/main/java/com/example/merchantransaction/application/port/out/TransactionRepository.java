@@ -9,4 +9,5 @@ public interface TransactionRepository {
     void save(Transaction transaction);
     Optional<Transaction> findById(String id);
     List<Transaction> findAll();
+    boolean delete(String transactionId);
 }

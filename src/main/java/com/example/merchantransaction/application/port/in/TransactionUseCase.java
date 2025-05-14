@@ -7,7 +7,7 @@ import java.util.List;
 import java.util.Optional;
 
 public interface TransactionUseCase {
-    void processPayment(Transaction transaction) throws TransactionException;
+    void createTransaction(Transaction transaction) throws TransactionException;
     List<Transaction> getAllTransactions();
     Optional<Transaction> findById(String id);
 }

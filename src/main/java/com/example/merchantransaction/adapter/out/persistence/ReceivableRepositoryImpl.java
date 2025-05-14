@@ -27,7 +27,6 @@ import java.util.stream.Collectors;
 @Repository
 public class ReceivableRepositoryImpl implements ReceivableRepository {
 
-
     private final RestTemplate restTemplate;
     private final RetryTemplate retryTemplate;
     private final String baseUrl;
