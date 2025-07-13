@@ -60,6 +60,11 @@
 			<artifactId>spring-retry</artifactId>
 		</dependency>
 
+        <!-- Messages -->
+        <dependency>
+            <groupId>org.springframework.kafka</groupId>
+            <artifactId>spring-kafka</artifactId>
+        </dependency>
 
 		<!-- API Documentation -->
 		<dependency>

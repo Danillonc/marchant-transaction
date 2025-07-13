@@ -26,19 +26,37 @@ public class NumeratorClient {
     }
 
     public Integer generateUniqueId() {
-        try {
-            acquireLock();
+        return retryTemplate.execute(context -> {
+            log.debug("Generating unique ID, attempt {}", context.getRetryCount() + 1);
 
+            // Fetch current value
             Integer currentValue = getCurrentNumerator();
-            return updateNumeratorAtomically(currentValue, currentValue + 1);
-        } finally {
+
+            // Try to atomically update
             try {
-                releaseLock();
-            } catch (Exception e) {
-                log.warn("Failed to release lock: {}", e.getMessage());
+                return updateNumeratorAtomically(currentValue, currentValue + 1);
+            } catch (IllegalStateException e) {
+                // If test-and-set fails, retry
+                log.debug("Test-and-set failed, retrying...");
+                throw e;
             }
-        }
+        });
     }
+
+//    public Integer generateUniqueId() {
+//        try {
+//            acquireLock();
+//
+//            Integer currentValue = getCurrentNumerator();
+//            return updateNumeratorAtomically(currentValue, currentValue + 1);
+//        } finally {
+//            try {
+//                releaseLock();
+//            } catch (Exception e) {
+//                log.warn("Failed to release lock: {}", e.getMessage());
+//            }
+//        }
+//    }
 
     private void acquireLock() {
         retryTemplate.execute((RetryCallback<Void, RuntimeException>) context -> {
@@ -65,25 +83,44 @@ public class NumeratorClient {
     }
 
     private Integer updateNumeratorAtomically(int oldValue, int newValue) {
-        return retryTemplate.execute(context -> {
-            log.debug("Updating numerator from {} to {}, attempt {}", oldValue, newValue, context.getRetryCount() + 1);
+        log.debug("Updating numerator from {} to {}", oldValue, newValue);
 
-            String url = baseUrl + "/numerator/test-and-set";
-            Map<String, Object> requestBody = Map.of(
-                    "oldValue", oldValue,
-                    "newValue", newValue
-            );
+        String url = baseUrl + "/numerator/test-and-set";
+        Map<String, Object> requestBody = Map.of(
+                "oldValue", oldValue,
+                "newValue", newValue
+        );
 
-            HttpEntity<Map<String, Object>> request = new HttpEntity<>(requestBody, getHeader());
-            ResponseEntity<Map> response = restTemplate.exchange(url, HttpMethod.PUT, request, Map.class);
-            Object returnedValue = response.getBody().get("numerator");
-            if (returnedValue instanceof Integer) {
-                return (Integer) returnedValue;
-            } else {
-                throw new IllegalStateException("Unexpected response structure from /test-and-set");
-            }
-        });
+        HttpEntity<Map<String, Object>> request = new HttpEntity<>(requestBody, getHeader());
+        ResponseEntity<Map> response = restTemplate.exchange(url, HttpMethod.PUT, request, Map.class);
+        Object returnedValue = response.getBody().get("numerator");
+        if (returnedValue instanceof Integer) {
+            return (Integer) returnedValue;
+        } else {
+            throw new IllegalStateException("Unexpected response structure from /test-and-set");
+        }
     }
+
+//    private Integer updateNumeratorAtomically(int oldValue, int newValue) {
+//        return retryTemplate.execute(context -> {
+//            log.debug("Updating numerator from {} to {}, attempt {}", oldValue, newValue, context.getRetryCount() + 1);
+//
+//            String url = baseUrl + "/numerator/test-and-set";
+//            Map<String, Object> requestBody = Map.of(
+//                    "oldValue", oldValue,
+//                    "newValue", newValue
+//            );
+//
+//            HttpEntity<Map<String, Object>> request = new HttpEntity<>(requestBody, getHeader());
+//            ResponseEntity<Map> response = restTemplate.exchange(url, HttpMethod.PUT, request, Map.class);
+//            Object returnedValue = response.getBody().get("numerator");
+//            if (returnedValue instanceof Integer) {
+//                return (Integer) returnedValue;
+//            } else {
+//                throw new IllegalStateException("Unexpected response structure from /test-and-set");
+//            }
+//        });
+//    }
 
     private void releaseLock() {
         try {

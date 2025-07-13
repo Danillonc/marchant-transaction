@@ -1,59 +1,101 @@
 {
   "transactions": [
     {
-      "value": "340.30",
-      "description": "T-Shirt Black/M",
+      "id": "3",
+      "value": 100,
+      "description": "Payment for order #1234",
       "method": "credit_card",
-      "cardNumber": "3486",
-      "cardHolderName": "Fonsi Julian",
-      "cardExpirationDate": "04/28",
-      "cardCvv": "290",
-      "id": "1"
+      "cardNumber": "5678",
+      "cardHolderName": "John Doe",
+      "cardExpirationDate": "12/25",
+      "cardCvv": "123"
     },
     {
-      "id": "4",
-      "value": 1200,
-      "description": "Relogio",
-      "method": "debit_card",
-      "cardNumber": "9009",
-      "cardHolderName": "Art",
-      "cardExpirationDate": "12/28",
-      "cardCvv": "887"
+      "id": "10",
+      "value": 100,
+      "description": "Payment for order #1234",
+      "method": "credit_card",
+      "cardNumber": "5678",
+      "cardHolderName": "John Doe",
+      "cardExpirationDate": "12/25",
+      "cardCvv": "123"
+    },
+    {
+      "id": "15",
+      "value": 100,
+      "description": "Payment for order #1234",
+      "method": "credit_card",
+      "cardNumber": "5678",
+      "cardHolderName": "John Doe",
+      "cardExpirationDate": "12/25",
+      "cardCvv": "123"
+    },
+    {
+      "id": "25",
+      "value": 100,
+      "description": "Payment for order #1234",
+      "method": "credit_card",
+      "cardNumber": "5678",
+      "cardHolderName": "John Doe",
+      "cardExpirationDate": "12/25",
+      "cardCvv": "123"
+    },
+    {
+      "id": "21",
+      "value": 100,
+      "description": "Payment for order #1234",
+      "method": "credit_card",
+      "cardNumber": "5678",
+      "cardHolderName": "John Doe",
+      "cardExpirationDate": "12/25",
+      "cardCvv": "123"
     }
   ],
   "receivables": [
     {
-      "id": "1",
-      "status": "paid",
-      "create_date": "15/03/2020",
-      "subtotal": "200",
-      "discount": "4",
-      "total": "196"
-    },
-    {
-      "id": "2",
-      "status": "paid",
-      "create_date": "15/03/2020",
-      "subtotal": "100",
-      "discount": "2",
-      "total": "98"
-    },
-    {
-      "id": "3",
-      "status": "waiting_funds",
-      "create_date": "15/03/2020",
-      "subtotal": "100",
-      "discount": "2",
-      "total": "98"
-    },
-    {
       "id": "7",
-      "transactionId": "4",
-      "status": "paid",
-      "create_date": "09/05/2025",
-      "subtotal": 1200,
-      "discount": 24,
-      "total": 1176
+      "transactionId": "3",
+      "status": "waiting_funds",
+      "create_date": "06/08/2025",
+      "subtotal": 100,
+      "discount": 4,
+      "total": 96
+    },
+    {
+      "id": "12",
+      "transactionId": "10",
+      "status": "waiting_funds",
+      "create_date": "06/08/2025",
+      "subtotal": 100,
+      "discount": 4,
+      "total": 96
+    },
+    {
+      "id": "17",
+      "transactionId": "15",
+      "status": "waiting_funds",
+      "create_date": "06/08/2025",
+      "subtotal": 100,
+      "discount": 4,
+      "total": 96
+    },
+    {
+      "id": "31",
+      "transactionId": "25",
+      "status": "waiting_funds",
+      "create_date": "06/08/2025",
+      "subtotal": 100,
+      "discount": 4,
+      "total": 96
+    },
+    {
+      "id": "33",
+      "transactionId": "21",
+      "status": "waiting_funds",
+      "create_date": "06/08/2025",
+      "subtotal": 100,
+      "discount": 4,
+      "total": 96
     }
   ]
 }

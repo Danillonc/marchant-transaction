@@ -1,11 +1,68 @@
+version: "3.9"
+
 services:
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.5.0
+    container_name: zookeeper
+    ports:
+      - "2181:2181"
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+      KAFKA_OPTS: "-Dzookeeper.4lw.commands.whitelist=ruok,stat,conf,srvr"
+    healthcheck:
+      test: [ "CMD", "sh", "-c", "echo ruok | nc localhost 2181 | grep imok" ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks:
+      - kafka-network
+
+  kafka:
+    image: confluentinc/cp-kafka:7.5.0
+    container_name: kafka
+    ports:
+      - "9092:9092"
+    depends_on:
+      zookeeper:
+        condition: service_healthy
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_LISTENERS: INTERNAL://0.0.0.0:29092,EXTERNAL://0.0.0.0:9092
+      KAFKA_ADVERTISED_LISTENERS: INTERNAL://kafka:29092,EXTERNAL://localhost:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    healthcheck:
+      test: [ "CMD", "kafka-topics", "--bootstrap-server", "kafka:29092", "--list" ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks:
+      - kafka-network
+
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    container_name: kafka-ui
+    ports:
+      - "8080:8080"
+    depends_on:
+      kafka:
+        condition: service_healthy
+    environment:
+      KAFKA_CLUSTERS_0_NAME: local-kafka
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:29092
+      DYNAMIC_CONFIG_ENABLED: "true"
+    networks:
+      - kafka-network
 
   json-server:
     image: vimagick/json-server
-    command: -h 0.0.0.0 -p 8080 /config/db.json
+    command: -h 0.0.0.0 -p 8085 /config/db.json
     stop_grace_period: 1s
     ports:
-      - "8080:8080"
+      - "8085:8085"
     volumes:
       - ./config:/config
 
@@ -21,6 +78,10 @@ services:
 
   tcpdump:
     image: alpine
-    command: sh -c "apk add --no-cache ngrep && ngrep -l -s 200000 -d any -W byline -q -t '^(GET|POST|PUT|DELETE|PATCH|HEAD|OPTIONS) ' port 8080"
+    command: sh -c "apk add --no-cache ngrep && ngrep -l -s 200000 -d any -W byline -q -t '^(GET|POST|PUT|DELETE|PATCH|HEAD|OPTIONS) ' port 8085"
     stop_grace_period: 1s
     network_mode: "service:json-server"
+
+networks:
+  kafka-network:
+    driver: bridge
